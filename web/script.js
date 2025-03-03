@@ -1,66 +1,47 @@
-let films = [];
-
-// Load data from JSON
-fetch('films.json')
+// Загрузка данных
+fetch('../data/films.json')
     .then(response => response.json())
     .then(data => {
-        films = data;
-        renderFilms(films);
-    })
-    .catch(error => console.error('Error loading data:', error));
+        window.films = data;
+        renderFilms(data);
+        addSearchListener();
+    });
 
-// Render films into the table
-function renderFilms(data) {
-    const tbody = document.getElementById('films-body');
-    tbody.innerHTML = ''; // Clear existing rows
+// Рендеринг карточек
+function renderFilms(films) {
+    const container = document.getElementById('filmContainer');
+    container.innerHTML = films.map(film => `
+    <div class="film-card">
+      <h2>${film.title}</h2>
+      <div class="film-detail">
+        <div>📅 Year: ${film.release_year}</div>
+        <div>🎥 Director: ${film.director}</div>
+        <div>🌍 Country: ${film.country}</div>
+        <div>💰 Revenue: $${film.box_office.toLocaleString()}</div>
+      </div>
+    </div>
+  `).join('');
+}
 
-    data.forEach(film => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${film.title}</td>
-            <td>${film.release_year}</td>
-            <td>${film.director}</td>
-            <td>${formatRevenue(film.box_office)}</td>
-            <td>${film.country}</td>
-        `;
-        tbody.appendChild(row);
+// Функции сортировки
+function sortByYear() {
+    films.sort((a, b) => a.release_year - b.release_year);
+    renderFilms(films);
+}
+
+function sortByRevenue() {
+    films.sort((a, b) => b.box_office - a.box_office);
+    renderFilms(films);
+}
+
+// Поиск
+function addSearchListener() {
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+        const searchTerm = e.target.value.toLowerCase();
+        const filtered = window.films.filter(film =>
+            film.title.toLowerCase().includes(searchTerm) ||
+            film.director.toLowerCase().includes(searchTerm)
+        );
+        renderFilms(filtered);
     });
 }
-
-// Format box office revenue (e.g., 2500000000 → "$2.5B")
-function formatRevenue(value) {
-    if (value >= 1e9) {
-        return `$${(value / 1e9).toFixed(1)}B`;
-    } else if (value >= 1e6) {
-        return `$${(value / 1e6).toFixed(1)}M`;
-    } else {
-        return `$${value.toLocaleString()}`;
-    }
-}
-
-// Sorting logic
-function sortBy(criteria) {
-    let sorted;
-    switch(criteria) {
-        case 'title':
-            sorted = films.sort((a, b) => a.title.localeCompare(b.title));
-            break;
-        case 'year':
-            sorted = films.sort((a, b) => b.release_year - a.release_year);
-            break;
-        case 'revenue':
-            sorted = films.sort((a, b) => b.box_office - a.box_office);
-            break;
-    }
-    renderFilms(sorted);
-}
-
-// Search functionality
-document.getElementById('search').addEventListener('input', (e) => {
-    const query = e.target.value.toLowerCase();
-    const filtered = films.filter(film => 
-        film.title.toLowerCase().includes(query) ||
-        film.director.toLowerCase().includes(query)
-    );
-    renderFilms(filtered);
-});
