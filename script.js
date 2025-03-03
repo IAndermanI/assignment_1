@@ -1,5 +1,5 @@
 // Загрузка данных
-fetch('../data/films.json')
+fetch('data/films.json')
     .then(response => response.json())
     .then(data => {
         window.films = data;
